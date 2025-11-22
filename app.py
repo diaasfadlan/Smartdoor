@@ -20,13 +20,18 @@ def notify_all(message):
         except:
             pass
 
-@app.route('/', methods=['GET','POST'])
+
+# ======================
+# LOGIN PAGE
+# ======================
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s",(username,password))
+        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
         user = cur.fetchone()
         cur.close()
 
@@ -35,32 +40,51 @@ def login():
             return redirect('/dashboard')
         else:
             return render_template('login.html', error="Login gagal!")
+
     return render_template('login.html')
 
+
+# ======================
+# DASHBOARD
+# ======================
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/')
+
     cur = mysql.connection.cursor()
-    cur.execute("SELECT id,status,image_path,time FROM logs ORDER BY time DESC")
+    cur.execute("SELECT id, status, image_path, time FROM logs ORDER BY time DESC")
     logs = cur.fetchall()
     cur.close()
+
     return render_template('dashboard.html', logs=logs)
 
+
+# ======================
+# API UNTUK ESP32 (MENERIMA GAMBAR JPEG RAW)
+# ======================
 @app.route('/api/alert', methods=['POST'])
 def api_alert():
-    status = request.form.get('status','unknown')
+
+    # Status (OK atau FAIL)
+    status = request.form.get('status', 'unknown')
+
+    # Cek apakah ESP32 mengirim gambar
+    raw = request.data
     image_url = None
 
-    if 'image' in request.files:
-        img = request.files['image']
+    if raw and len(raw) > 0:
         filename = secure_filename(datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg")
-        path = os.path.join(UPLOAD_FOLDER, filename)
-        img.save(path)
-        image_url = f"/{path.replace(os.path.sep, '/')}"
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
 
+        with open(save_path, "wb") as f:
+            f.write(raw)
+
+        image_url = f"/{save_path.replace(os.path.sep, '/')}"
+
+    # Simpan ke database
     cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO logs (status,image_path) VALUES (%s,%s)", (status, image_url))
+    cur.execute("INSERT INTO logs (status, image_path) VALUES (%s, %s)", (status, image_url))
     mysql.connection.commit()
     cur.close()
 
@@ -71,8 +95,14 @@ def api_alert():
     })
 
     notify_all(data)
+
     return "OK", 200
 
+
+
+# ======================
+# EVENT STREAM (Dashboard Real-time)
+# ======================
 @app.route('/events')
 def events():
     def gen():
@@ -84,7 +114,9 @@ def events():
                 yield f"data: {msg}\n\n"
         except GeneratorExit:
             subscribers.remove(q)
+
     return Response(gen(), mimetype='text/event-stream')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
