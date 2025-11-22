@@ -4,11 +4,11 @@ import os
 def get_db_connection():
     """Buat koneksi ke MySQL database"""
     connection = pymysql.connect(
-        host=os.getenv('MYSQLHOST', 'containers-us-west-xxx.railway.app'),  # ganti dengan PUBLIC HOST
+        host=os.getenv('MYSQLHOST', 'mysql.railway.internal'),  # ganti dengan PUBLIC HOST
         user=os.getenv('MYSQLUSER', 'root'),
         password=os.getenv('MYSQLPASSWORD', 'ynUANFrkQCctsInFeiAvpNvpMRIztOsZ'),
         database=os.getenv('MYSQLDATABASE', 'db_smartdoor'),
-        port=int(os.getenv('MYSQLPORT', 13730)),  # ganti dengan PUBLIC PORT dari Railway
+        port=int(os.getenv('MYSQLPORT', 3306)),  # ganti dengan PUBLIC PORT dari Railway
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False
@@ -51,5 +51,6 @@ def init_db():
     cursor.close()
     conn.close()
     print("✅ Database initialized!")
+
 
 
