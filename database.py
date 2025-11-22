@@ -4,11 +4,11 @@ import os
 def get_db_connection():
     """Buat koneksi ke MySQL database"""
     connection = pymysql.connect(
-        host=os.getenv('MYSQLHOST', 'localhost'),
+        host=os.getenv('MYSQLHOST', 'mysql.railway.internal'),
         user=os.getenv('MYSQLUSER', 'root'),
-        password=os.getenv('MYSQLPASSWORD', ''),
+        password=os.getenv('MYSQLPASSWORD', 'ynUANFrkQCctsInFeiAvpNvpMRIztOsZ'),
         database=os.getenv('MYSQLDATABASE', 'db_smartdoor'),
-        port=int(os.getenv('MYSQLPORT', 3306)),
+        port=int(os.getenv('MYSQLPORT', 13730)),
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False
@@ -50,3 +50,4 @@ def init_db():
     cursor.close()
     conn.close()
     print("✅ Database initialized!")
+
