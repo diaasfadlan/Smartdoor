@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SmartDoor</title>
+  <style>
+    body { background:#ececec; font-family:Arial; margin:0; }
+    .header{background:#075e54;color:#fff;padding:12px;font-size:20px;}
+    .chat-box{height:calc(100vh - 60px);overflow:auto;padding:10px;}
+    .bubble{background:#fff;padding:10px;margin:10px 0;border-radius:10px;box-shadow:0 0 4px rgba(0,0,0,0.15);width:fit-content;}
+    img{width:240px;border-radius:8px;}
+  </style>
+</head>
+<body>
+  <div class="header">SmartDoor</div>
+  <div class="chat-box" id="chat">
+    {% for row in logs %}
+      <div class="bubble">
+        <b>{{ row[3] }}</b><br>
+        Status: {{ row[1] }}<br><br>
+        {% if row[2] %}
+          <img src="{{ row[2] }}">
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+<script>
+// register SW for notifications
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js').then(()=>console.log('sw ok'));
+}
+if (Notification.permission !== "granted") Notification.requestPermission();
+
+const evt = new EventSource('/events');
+evt.onmessage = function(e) {
+  const data = JSON.parse(e.data);
+  // show browser notif
+  if (Notification.permission === "granted") {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification('SmartDoor', { body: 'Ada aktivitas di depan pintu', icon:'/static/icon.png' });
+    });
+  }
+  // append new bubble (simple)
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'bubble';
+  div.innerHTML = `<b>${data.time}</b><br>Status: ${data.status}<br>${ data.image ? '<br><img src="'+data.image+'">' : '' }`;
+  chat.insertBefore(div, chat.firstChild);
+};
+</script>
+</body>
+</html>
