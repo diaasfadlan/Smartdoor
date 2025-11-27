@@ -4,24 +4,22 @@ import os
 def get_db_connection():
     """Buat koneksi ke MySQL database"""
     connection = pymysql.connect(
-        host=os.getenv('MYSQLHOST', 'mysql.railway.internal'),  # ganti dengan PUBLIC HOST
+        host=os.getenv('MYSQLHOST', 'mysql.railway.internal'),
         user=os.getenv('MYSQLUSER', 'root'),
         password=os.getenv('MYSQLPASSWORD', 'ynUANFrkQCctsInFeiAvpNvpMRIztOsZ'),
         database=os.getenv('MYSQLDATABASE', 'db_smartdoor'),
-        port=int(os.getenv('MYSQLPORT', 3306)),  # ganti dengan PUBLIC PORT dari Railway
+        port=int(os.getenv('MYSQLPORT', 3306)),
         charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor,
-        autocommit=False
+        cursorclass=pymysql.cursors.DictCursor
     )
     return connection
 
 
 def init_db():
-    """Inisialisasi database - buat table kalau belum ada"""
+    """Inisialisasi database"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Buat table users
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,27 +28,22 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
-    # Buat table logs
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS logs (
             id INT AUTO_INCREMENT PRIMARY KEY,
             status VARCHAR(50),
-            image_path VARCHAR(255),
+            image_path LONGBLOB,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
-    # Insert default user (username: admin, password: admin)
+
     cursor.execute("""
-        INSERT IGNORE INTO users (username, password) 
+        INSERT IGNORE INTO users (username, password)
         VALUES ('admin', 'diasgantengbanget')
     """)
-    
+
     conn.commit()
     cursor.close()
     conn.close()
-    print("✅ Database initialized!")
-
-
-
+    print("Database OK!")
