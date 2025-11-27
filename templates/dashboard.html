@@ -4,21 +4,9 @@
     <meta charset="UTF-8">
     <title>Smartdoor Dashboard</title>
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-        }
-        img {
-            width: 120px;
-            height: auto;
-            border-radius: 8px;
-            background: #ddd;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        img { width: 120px; height: auto; border-radius: 8px; background: #ddd; }
     </style>
 </head>
 <body>
@@ -33,19 +21,19 @@
     </tr>
 
     {% for log in logs %}
-<div class="card">
-    <p>Status: {{ log[1] }}</p>
-    <p>Time: {{ log[3] }}</p>
-
-    {% if log[2] %}
-        <img src="data:image/jpeg;base64,{{ log[2] }}" 
-             width="200" style="border-radius: 6px;">
-    {% else %}
-        <img src="/static/default.jpg" width="200">
-    {% endif %}
-</div>
-{% endfor %}
-
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>
+            {% if log[2] %}
+                <img src="data:image/jpeg;base64,{{ log[2] }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='default.jpg') }}">
+            {% endif %}
+        </td>
+        <td>{{ log[1] }}</td>
+        <td>{{ log[3] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <br>
@@ -53,4 +41,3 @@
 
 </body>
 </html>
-
