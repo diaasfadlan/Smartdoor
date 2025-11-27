@@ -2,81 +2,293 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smartdoor Dashboard</title>
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            background: #1e1b29;
-            color: white;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0118;
+            background-image: 
+                radial-gradient(at 20% 80%, rgba(90, 51, 138, 0.15) 0px, transparent 50%),
+                radial-gradient(at 80% 20%, rgba(58, 39, 95, 0.2) 0px, transparent 50%);
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            overflow: hidden;
         }
-
-        /* Header */
+        
+        /* Header Navbar */
         .navbar {
-            background: #3a275f;
-            padding: 14px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
+            background: linear-gradient(135deg, #5a338a 0%, #3a275f 100%);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 10;
         }
-
-        /* Chat Container */
+        
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .nav-title {
+            flex: 1;
+            font-size: 19px;
+            font-weight: 600;
+            color: white;
+            letter-spacing: 0.3px;
+        }
+        
+        .nav-status {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #25d366;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+        
+        /* Chat Background */
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            padding: 16px;
+            background: #0a0118;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 20px),
+                radial-gradient(circle at 50% 50%, rgba(90, 51, 138, 0.03) 0%, transparent 50%);
+            position: relative;
         }
-
-        /* Chat Bubble */
+        
+        .chat-date {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .date-badge {
+            display: inline-block;
+            background: rgba(20, 16, 30, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* Chat Bubbles */
         .bubble {
-            background: #2d2349;
-            border-radius: 10px;
-            padding: 10px;
-            max-width: 80%;
             display: flex;
-            flex-direction: column;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .bubble-left {
+            justify-content: flex-start;
+        }
+        
+        .bubble-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .bubble-content {
+            max-width: 75%;
+            background: linear-gradient(135deg, #2d1b4e 0%, #1e1535 100%);
+            border-radius: 12px;
+            border-top-left-radius: 2px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .bubble-content::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 8px 0;
+            border-color: transparent #2d1b4e transparent transparent;
+        }
+        
+        .bubble-sender {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
             gap: 6px;
-            box-shadow: 0 0 5px rgba(255,255,255,0.1);
-            animation: fadeIn .4s;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        
+        .verified-badge {
+            background: rgba(37, 211, 102, 0.2);
+            color: #25d366;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
         }
-
+        
         .bubble img {
-            width: 200px;
-            border-radius: 8px;
+            width: 100%;
+            max-width: 280px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: block;
         }
-
+        
         .status {
             font-size: 14px;
-            color: #a2b5ff;
-            font-weight: bold;
+            color: #e4e4e7;
+            margin-bottom: 4px;
+            line-height: 1.4;
         }
-
-        .time {
+        
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(167, 139, 250, 0.15);
+            padding: 4px 10px;
+            border-radius: 12px;
             font-size: 12px;
-            text-align: right;
-            opacity: .8;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-top: 6px;
         }
-
+        
+        .status-icon {
+            font-size: 14px;
+        }
+        
+        .time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            text-align: right;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+        }
+        
+        .checkmark {
+            color: #53bdeb;
+            font-size: 16px;
+        }
+        
         /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb {
-            background: #4a3a6f;
-            border-radius: 4px;
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(90, 51, 138, 0.5);
+            border-radius: 10px;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(90, 51, 138, 0.7);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .bubble-content {
+                max-width: 85%;
+            }
+            
+            .bubble img {
+                max-width: 240px;
+            }
+            
+            .navbar {
+                padding: 10px 12px;
+            }
+            
+            .nav-title {
+                font-size: 17px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chat-container {
+                padding: 12px 8px;
+            }
+            
+            .bubble-content {
+                max-width: 90%;
+            }
         }
     </style>
-
     <script>
         let lastCount = {{ logs|length }};
         
@@ -91,38 +303,61 @@
                     }
                 });
         }
-
+        
         function playNotif() {
             const audio = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1151-pristine.mp3");
             audio.play();
             alert("🔔 Data baru diterima!");
         }
-
-        setInterval(checkUpdate, 5000); // Check tiap 5 detik
+        
+        setInterval(checkUpdate, 5000);
     </script>
-
 </head>
 <body>
-
-<div class="navbar">Smartdoor</div>
-
-<div class="chat-container" id="chatBox">
-    {% for log in logs %}
-    <div class="bubble">
-        {% if log.image %}
-            <img src="data:image/jpeg;base64,{{ log.image }}">
-        {% endif %}
-        <span class="status">Status: {{ log.status }}</span>
-        <span class="time">{{ log.time }}</span>
+    <div class="navbar">
+        <div class="nav-icon">🚪</div>
+        <div style="flex: 1;">
+            <div class="nav-title">Smartdoor System</div>
+            <div class="nav-status">
+                <span class="status-dot"></span>
+                <span>Active</span>
+            </div>
+        </div>
     </div>
-    {% endfor %}
-</div>
-
-<script>
-    // Auto scroll ke bawah (like WhatsApp)
-    const chatBox = document.getElementById("chatBox");
-    chatBox.scrollTop = chatBox.scrollHeight;
-</script>
-
+    
+    <div class="chat-container" id="chatBox">
+        <div class="chat-date">
+            <span class="date-badge">TODAY</span>
+        </div>
+        
+        {% for log in logs %}
+        <div class="bubble bubble-left">
+            <div class="bubble-avatar">🔐</div>
+            <div class="bubble-content">
+                <div class="bubble-sender">
+                    Smartdoor Device
+                    <span class="verified-badge">✓ VERIFIED</span>
+                </div>
+                {% if log.image %}
+                    <img src="data:image/jpeg;base64,{{ log.image }}" alt="Detection">
+                {% endif %}
+                <div class="status">Detection recorded</div>
+                <div class="status-label">
+                    <span class="status-icon">🎯</span>
+                    <span>{{ log.status }}</span>
+                </div>
+                <div class="time">
+                    {{ log.time }}
+                    <span class="checkmark">✓✓</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <script>
+        const chatBox = document.getElementById("chatBox");
+        chatBox.scrollTop = chatBox.scrollHeight;
+    </script>
 </body>
 </html>
