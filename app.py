@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request, redirect, session, Response
+from flask import Flask, render_template, request, redirect, session, Response, url_for
 from database import get_db_connection
 from datetime import datetime
-import base64
-import os, queue, json
+import base64, os, queue, json
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'smartdoor-secret-change-in-production')
@@ -54,23 +53,14 @@ def dashboard():
     conn.close()
 
     logs = []
-    for row in rows:
-        _id, status, blob, time = row
-
-        # Decode BLOB to Base64
-        if blob:
-            try:
-                image_data = base64.b64encode(blob).decode('utf-8')
-            except Exception as e:
-                print("Decode Error:", e)
-                image_data = None
-        else:
-            image_data = None
-
+    for r in rows:
+        _id, status, blob, time = r
+        image_base64 = base64.b64encode(blob).decode('utf-8') if blob else None
+        
         logs.append({
             "id": _id,
             "status": status,
-            "image": image_data,
+            "image": image_base64,
             "time": time
         })
 
@@ -89,11 +79,10 @@ def api_alert():
         status = request.form.get('status', 'unknown')
         image_blob = None
 
-        # ESP32 send file OR raw binary
-        if 'image' in request.files and request.files['image'].filename != '':
+        if 'image' in request.files:
             image_blob = request.files['image'].read()
-        elif request.data and len(request.data) > 100:
-            image_blob = request.data  # raw camera bytes
+        elif request.data and len(request.data) > 50:
+            image_blob = request.data
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -105,51 +94,11 @@ def api_alert():
         cur.close()
         conn.close()
 
-        if image_blob:
-            notify_all(json.dumps({
-                "status": status,
-                "image": base64.b64encode(image_blob).decode('utf-8'),
-                "time": datetime.now().strftime("%H:%M:%S")
-            }))
-        else:
-            notify_all(json.dumps({
-                "status": status,
-                "image": None,
-                "time": datetime.now().strftime("%H:%M:%S")
-            }))
-
         return "OK", 200
 
     except Exception as e:
         print("API ERROR:", e)
         return str(e), 500
-
-
-@app.route('/events')
-def events():
-    def gen():
-        q = queue.Queue()
-        subscribers.append(q)
-        try:
-            while True:
-                msg = q.get()
-                yield f"data: {msg}\n\n"
-        except GeneratorExit:
-            subscribers.remove(q)
-
-    return Response(gen(), mimetype='text/event-stream')
-
-
-@app.route('/test')
-def test():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT DATABASE(), VERSION()")
-        res = cur.fetchone()
-        return f"DB OK<br>{res}"
-    except Exception as e:
-        return f"DB ERROR: {str(e)}"
 
 
 if __name__ == '__main__':
