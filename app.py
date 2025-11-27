@@ -9,14 +9,6 @@ app.secret_key = os.getenv('SECRET_KEY', 'smartdoor-secret-change-in-production'
 subscribers = []
 
 
-def notify_all(message):
-    for q in list(subscribers):
-        try:
-            q.put_nowait(message)
-        except:
-            pass
-
-
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -25,8 +17,7 @@ def login():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s",
-                    (username, password))
+        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -54,21 +45,15 @@ def dashboard():
 
     logs = []
     for row in rows:
-        img = row[2]
-        img_base64 = None
-
-        if img:
+        img = None
+        if row[2]:
             try:
-                # Jika HEX format dari MySQL → convert
-                if isinstance(img, str) and img.startswith("0x"):
-                    hex_data = img[2:]
-                    img = bytes.fromhex(hex_data)
-
-                img_base64 = base64.b64encode(img).decode('utf-8')
+                img = base64.b64encode(row[2]).decode("utf-8")
             except Exception as e:
-                print("Decode Error:", e)
+                print("Decode error:", e)
+                img = None
 
-        logs.append((row[0], row[1], img_base64, row[3]))
+        logs.append((row[0], row[1], img, row[3]))
 
     return render_template("dashboard.html", logs=logs)
 
@@ -92,10 +77,10 @@ def api_alert():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO logs (status, image_path, time)
-            VALUES (%s, %s, NOW())
-        """, (status, image_blob))
+        cur.execute(
+            "INSERT INTO logs (status, image_path, time) VALUES (%s, %s, NOW())",
+            (status, image_blob)
+        )
         conn.commit()
         cur.close()
         conn.close()
@@ -107,5 +92,5 @@ def api_alert():
         return str(e), 500
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
