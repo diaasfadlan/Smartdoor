@@ -51,9 +51,12 @@
       <div class="bubble">
         <b>{{ row[3] }}</b>
         <div>Status: {{ row[1] }}</div>
-        {% if row[2] %}
-          <img src="{{ row[2] }}">
-        {% endif %}
+{% if row[2] %}
+  <img src="{{ row[2] }}" onerror="this.style.border='3px solid red'; console.log('Image error:', this.src)">
+{% else %}
+  <div style="color:red;">No Image</div>
+{% endif %}
+
       </div>
     {% endfor %}
   </div>
@@ -73,3 +76,4 @@ evt.onmessage = function(e) {
 </script>
 </body>
 </html>
+
