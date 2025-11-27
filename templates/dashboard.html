@@ -33,22 +33,19 @@
     </tr>
 
     {% for log in logs %}
-    <tr>
-        <td>{{ loop.index }}</td>
+<div class="card">
+    <p>Status: {{ log[1] }}</p>
+    <p>Time: {{ log[3] }}</p>
 
-        <!-- Jika gambar ada → tampilkan Base64 -->
-        <td>
-            {% if log[2] %}
-                <img src="data:image/jpeg;base64,{{ log[2] }}">
-            {% else %}
-                <img src="https://via.placeholder.com/120x90?text=No+Image">
-            {% endif %}
-        </td>
+    {% if log[2] %}
+        <img src="data:image/jpeg;base64,{{ log[2] }}" 
+             width="200" style="border-radius: 6px;">
+    {% else %}
+        <img src="/static/default.jpg" width="200">
+    {% endif %}
+</div>
+{% endfor %}
 
-        <td>{{ log[1] }}</td>
-        <td>{{ log[3] }}</td>
-    </tr>
-    {% endfor %}
 </table>
 
 <br>
@@ -56,3 +53,4 @@
 
 </body>
 </html>
+
