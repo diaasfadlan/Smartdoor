@@ -53,11 +53,11 @@ def dashboard():
     cur.close()
     conn.close()
 
-    # Convert image BLOB → base64 untuk dashboard
     convert_logs = []
     for row in logs:
         row = list(row)
-        if row[2]:
+        # convert only if BLOB bytes
+        if isinstance(row[2], (bytes, bytearray)):
             row[2] = base64.b64encode(row[2]).decode('utf-8')
         convert_logs.append(row)
 
@@ -76,7 +76,6 @@ def api_alert():
         status = request.form.get('status') or request.args.get('status') or 'unknown'
         image_blob = None
 
-        # File image dari ESP
         if 'image' in request.files and request.files['image'].filename != '':
             image_blob = request.files['image'].read()
         elif request.data:
@@ -103,7 +102,6 @@ def api_alert():
     except Exception as e:
         print("API ERROR:", e)
         return str(e), 500
-
 
 
 @app.route('/events')
@@ -135,4 +133,3 @@ def test():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-
