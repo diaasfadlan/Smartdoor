@@ -1,10 +1,9 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 from database import get_db_connection
-from datetime import datetime
 import base64, os
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'smartdoor-secret-change-in-production')
+app.secret_key = os.getenv('SECRET_KEY', 'smartdoor-secret')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -15,12 +14,9 @@ def login():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(
-            "SELECT * FROM users WHERE username=%s AND password=%s",
-            (username, password)
-        )
+        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s",
+                    (username, password))
         user = cur.fetchone()
-        cur.close()
         conn.close()
 
         if user:
@@ -34,34 +30,33 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
+    if 'user' not in session:
+        return redirect('/')
+
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC")
     rows = cur.fetchall()
-    cur.close()
     conn.close()
 
     logs = []
     for row in rows:
-        image_blob = row[2]
-        img_base64 = None
+        img_blob = row.get("image_path")
+        img_base64 = base64.b64encode(img_blob).decode('utf-8') if img_blob else None
 
-        if image_blob:
-            try:
-                # Jika bytes → langsung base64 encode
-                img_base64 = base64.b64encode(image_blob).decode('utf-8')
-            except Exception as e:
-                print("Decode Error:", e)
-                img_base64 = None
+        logs.append({
+            "id": row.get("id"),
+            "status": row.get("status"),
+            "image": img_base64,
+            "time": row.get("time")
+        })
 
-        logs.append((row[0], row[1], img_base64, row[3]))
-
-    return render_template("dashboard.html", logs=logs)
+    return render_template('dashboard.html', logs=logs)
 
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.clear()
     return redirect('/')
 
 
@@ -79,19 +74,18 @@ def api_alert():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO logs (status, image_path, time)
-            VALUES (%s, %s, NOW())
+            INSERT INTO logs (status, image_path)
+            VALUES (%s, %s)
         """, (status, image_blob))
         conn.commit()
-        cur.close()
         conn.close()
 
         return "OK", 200
 
     except Exception as e:
-        print("API INSERT ERROR:", e)
+        print("API ERROR:", e)
         return str(e), 500
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
