@@ -74,10 +74,9 @@ def logout():
 def api_alert():
     try:
         status = request.form.get('status') or request.args.get('status') or 'unknown'
-
         image_blob = None
 
-        # ESP kirim binary raw
+        # File image dari ESP
         if 'image' in request.files and request.files['image'].filename != '':
             image_blob = request.files['image'].read()
         elif request.data:
@@ -104,6 +103,7 @@ def api_alert():
     except Exception as e:
         print("API ERROR:", e)
         return str(e), 500
+
 
 
 @app.route('/events')
@@ -135,3 +135,4 @@ def test():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
