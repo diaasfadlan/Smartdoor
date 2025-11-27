@@ -29,7 +29,7 @@
       border-radius: 10px;
       border-left: 4px solid #764ba2;
       width: 280px;
-      align-self: flex-start; /* Masuk kiri */
+      align-self: flex-start;
     }
     img {
       width: 100%;
@@ -64,14 +64,15 @@ evt.onmessage = e => {
 
   let el = document.createElement('div');
   el.className = "bubble";
+
   el.innerHTML = `
     <b>${data.time}</b>
     <div>Status: <b>${data.status}</b></div>
     ${data.image ? `<img src="data:image/jpeg;base64,${data.image}">` : ""}
   `;
 
-  chat.appendChild(el); // dari atas ke bawah
-  chat.scrollTop = chat.scrollHeight; // auto scroll ke bawah
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
 };
 </script>
 
