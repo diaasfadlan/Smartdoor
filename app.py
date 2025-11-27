@@ -75,12 +75,19 @@ def api_alert():
         save_path = os.path.join(UPLOAD_FOLDER, filename)
 
         # === Prioritas file upload ===
-        if "image" in request.files and request.files["image"].filename != "":
-            file = request.files["image"]
-            filename = secure_filename(filename)
-            save_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(save_path)
-            image_url = f"/static/uploads/{filename}"
+    if 'image' in request.files and request.files['image'].filename != '':
+    file = request.files['image']
+    filename = secure_filename(filename)
+    save_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(save_path)
+    else:
+    raw = request.data
+    if raw:
+        with open(save_path, "wb") as f:
+            f.write(raw)
+
+    base_url = request.host_url.rstrip('/')
+    image_url = f"{base_url}/static/uploads/{filename}"
 
         # === Kalau raw bytes / ESP kamera kirim binary ===
         elif request.data:
@@ -143,3 +150,4 @@ def test():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
