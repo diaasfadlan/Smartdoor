@@ -17,7 +17,6 @@
       padding: 12px 16px;
       font-size: 19px;
       font-weight: 500;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -27,74 +26,21 @@
       overflow: auto;
       padding: 12px 8px;
       background: #e5ddd5;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.05"><text x="10" y="50" font-size="40" fill="%23000">💬</text></svg>');
     }
     .bubble {
       background: #dcf8c6;
       padding: 8px 10px;
       margin: 4px 8px;
       border-radius: 8px;
-      box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
       max-width: 85%;
       width: fit-content;
       margin-left: auto;
-      position: relative;
-      word-wrap: break-word;
-    }
-    .bubble::before {
-      content: '';
-      position: absolute;
-      right: -8px;
-      top: 0;
-      width: 0;
-      height: 0;
-      border-left: 8px solid #dcf8c6;
-      border-top: 8px solid transparent;
-    }
-    .bubble b {
-      color: #303030;
-      font-size: 13px;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .bubble-status {
-      color: #667781;
-      font-size: 14px;
-      line-height: 1.4;
     }
     img {
-      max-width: 100%;
       width: 240px;
       border-radius: 8px;
       margin-top: 6px;
       display: block;
-    }
-    
-    @media (max-width: 600px) {
-      .header {
-        padding: 10px 12px;
-        font-size: 17px;
-      }
-      .chat-box {
-        padding: 8px 4px;
-      }
-      .bubble {
-        max-width: 90%;
-        margin: 4px;
-      }
-      img {
-        width: 200px;
-      }
-    }
-    
-    @media (max-width: 400px) {
-      img {
-        width: 180px;
-      }
-      .bubble {
-        padding: 6px 8px;
-        font-size: 14px;
-      }
     }
   </style>
 </head>
@@ -104,7 +50,7 @@
     {% for row in logs %}
       <div class="bubble">
         <b>{{ row[3] }}</b>
-        <div class="bubble-status">Status: {{ row[1] }}</div>
+        <div>Status: {{ row[1] }}</div>
         {% if row[2] %}
           <img src="{{ row[2] }}">
         {% endif %}
@@ -113,26 +59,15 @@
   </div>
 
 <script>
-// register SW for notifications
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js').then(()=>console.log('sw ok'));
-}
-if (Notification.permission !== "granted") Notification.requestPermission();
-
 const evt = new EventSource('/events');
 evt.onmessage = function(e) {
   const data = JSON.parse(e.data);
-  // show browser notif
-  if (Notification.permission === "granted") {
-    navigator.serviceWorker.ready.then(reg => {
-      reg.showNotification('SmartDoor', { body: 'Ada aktivitas di depan pintu', icon:'/static/icon.png' });
-    });
-  }
-  // append new bubble (simple)
   const chat = document.getElementById('chat');
   const div = document.createElement('div');
   div.className = 'bubble';
-  div.innerHTML = `<b>${data.time}</b><div class="bubble-status">Status: ${data.status}</div>${ data.image ? '<img src="'+data.image+'">' : '' }`;
+  div.innerHTML = `<b>${data.time}</b>
+                   <div>Status: ${data.status}</div>
+                   ${data.image ? '<img src="'+data.image+'">' : ''}`;
   chat.insertBefore(div, chat.firstChild);
 };
 </script>
