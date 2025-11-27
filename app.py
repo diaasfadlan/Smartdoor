@@ -55,12 +55,15 @@ def dashboard():
     convert_logs = []
     for row in logs:
         row = list(row)
-        # encode base64 jika blob tidak None
-        if row[2]:
+
+        # Fix BLOB -> Base64
+        if row[2] is not None:
             try:
                 row[2] = base64.b64encode(row[2]).decode('utf-8')
-            except:
+            except Exception as e:
+                print("Image decode error:", e)
                 row[2] = None
+
         convert_logs.append(row)
 
     return render_template('dashboard.html', logs=convert_logs)
