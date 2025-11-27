@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, Response
+from flask import Flask, render_template, request, redirect, session, Response, send_from_directory
 from werkzeug.utils import secure_filename
 from database import get_db_connection, init_db
 from datetime import datetime
@@ -80,49 +80,68 @@ def logout():
 
 
 # ======================
-# API UNTUK ESP32 (MENERIMA GAMBAR JPEG RAW)
+# API UNTUK ESP32 (MENERIMA GAMBAR JPEG)
+# - Accepts:
+#   * multipart/form-data (field 'image')
+#   * raw jpeg body (Content-Type: image/jpeg)
+#   * header X-Status for status (FAIL / OK)
 # ======================
 @app.route('/api/alert', methods=['POST'])
 def api_alert():
     try:
-        # Status (OK atau FAIL)
-        status = request.form.get('status', 'unknown')
+        # Prioritas: form 'status' -> query -> header X-Status -> default
+        status = request.form.get('status') or request.args.get('status') or request.headers.get('X-Status') or 'unknown'
 
-        # Cek apakah ESP32 mengirim gambar
-        raw = request.data
         image_url = None
 
-        if raw and len(raw) > 0:
-            filename = secure_filename(datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg")
+        # 1) multipart file upload (common)
+        if 'image' in request.files and request.files['image'].filename != '':
+            file = request.files['image']
+            filename = secure_filename(datetime.now().strftime("%Y%m%d%H%M%S") + "_" + file.filename)
             save_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(save_path)
+            image_url = f"/uploads/{filename}"
 
-            with open(save_path, "wb") as f:
-                f.write(raw)
-
-            image_url = f"/{save_path.replace(os.path.sep, '/')}"
+        else:
+            # 2) raw body (ESP32 will send raw jpeg in body with content-type image/jpeg)
+            raw = request.data
+            if raw and len(raw) > 0:
+                filename = secure_filename(datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg")
+                save_path = os.path.join(UPLOAD_FOLDER, filename)
+                with open(save_path, "wb") as f:
+                    f.write(raw)
+                image_url = f"/uploads/{filename}"
 
         # Simpan ke database
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO logs (status, image_path) VALUES (%s, %s)", (status, image_url))
+        cur.execute("INSERT INTO logs (status, image_path, time) VALUES (%s, %s, NOW())", (status, image_url))
         conn.commit()
         cur.close()
         conn.close()
 
-        # Kirim notifikasi real-time ke dashboard
+        # Notify realtime ke dashboard (SSE)
         data = json.dumps({
             "status": status,
             "image": image_url,
             "time": datetime.now().strftime("%H:%M:%S")
         })
-
         notify_all(data)
 
         return "OK", 200
-    
+
     except Exception as e:
         print(f"Error in /api/alert: {str(e)}")
         return f"Error: {str(e)}", 500
+
+
+# ======================
+# Serve uploaded images publicly
+# ======================
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    # Serve only from UPLOAD_FOLDER
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 
 # ======================
@@ -138,8 +157,10 @@ def events():
                 msg = q.get()
                 yield f"data: {msg}\n\n"
         except GeneratorExit:
-            subscribers.remove(q)
-
+            try:
+                subscribers.remove(q)
+            except:
+                pass
     return Response(gen(), mimetype='text/event-stream')
 
 
@@ -161,6 +182,5 @@ def test():
 
 
 if __name__ == '__main__':
-    # Uncomment ini untuk init database pertama kali
-    # init_db()
+    # init_db()  # uncomment if database not initialized yet
     app.run(host='0.0.0.0', port=5000, debug=True)
