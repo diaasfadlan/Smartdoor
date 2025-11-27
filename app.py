@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, session, Response
-from werkzeug.utils import secure_filename
 from database import get_db_connection
 from datetime import datetime
 import base64
@@ -10,12 +9,14 @@ app.secret_key = os.getenv('SECRET_KEY', 'smartdoor-secret-change-in-production'
 
 subscribers = []
 
+
 def notify_all(message):
     for q in list(subscribers):
         try:
             q.put_nowait(message)
         except:
             pass
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -48,25 +49,32 @@ def dashboard():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC LIMIT 50")
-    logs = cur.fetchall()
+    rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    convert_logs = []
-    for row in logs:
-        row = list(row)
+    logs = []
+    for row in rows:
+        _id, status, blob, time = row
 
-        # Fix BLOB -> Base64
-        if row[2] is not None:
+        # Decode BLOB to Base64
+        if blob:
             try:
-                row[2] = base64.b64encode(row[2]).decode('utf-8')
+                image_data = base64.b64encode(blob).decode('utf-8')
             except Exception as e:
-                print("Image decode error:", e)
-                row[2] = None
+                print("Decode Error:", e)
+                image_data = None
+        else:
+            image_data = None
 
-        convert_logs.append(row)
+        logs.append({
+            "id": _id,
+            "status": status,
+            "image": image_data,
+            "time": time
+        })
 
-    return render_template('dashboard.html', logs=convert_logs)
+    return render_template('dashboard.html', logs=logs)
 
 
 @app.route('/logout')
@@ -78,13 +86,14 @@ def logout():
 @app.route('/api/alert', methods=['POST'])
 def api_alert():
     try:
-        status = request.form.get('status') or request.args.get('status') or 'unknown'
+        status = request.form.get('status', 'unknown')
         image_blob = None
 
+        # ESP32 send file OR raw binary
         if 'image' in request.files and request.files['image'].filename != '':
             image_blob = request.files['image'].read()
-        elif request.data:
-            image_blob = request.data
+        elif request.data and len(request.data) > 100:
+            image_blob = request.data  # raw camera bytes
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -96,12 +105,18 @@ def api_alert():
         cur.close()
         conn.close()
 
-        notify_all(json.dumps({
-            "status": status,
-            "image": (base64.b64encode(image_blob).decode('utf-8')
-                      if image_blob else None),
-            "time": datetime.now().strftime("%H:%M:%S")
-        }))
+        if image_blob:
+            notify_all(json.dumps({
+                "status": status,
+                "image": base64.b64encode(image_blob).decode('utf-8'),
+                "time": datetime.now().strftime("%H:%M:%S")
+            }))
+        else:
+            notify_all(json.dumps({
+                "status": status,
+                "image": None,
+                "time": datetime.now().strftime("%H:%M:%S")
+            }))
 
         return "OK", 200
 
