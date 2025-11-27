@@ -86,6 +86,17 @@ def api_alert():
         print("API ERROR:", e)
         return str(e), 500
 
+@app.route('/dashboard_check')
+def dashboard_check():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) as c FROM logs")
+    result = cur.fetchone()
+    conn.close()
+    return {"count": result['c']}
+
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080, debug=True)
+
