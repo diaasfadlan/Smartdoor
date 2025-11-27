@@ -6,7 +6,7 @@
     <style>
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 8px; text-align: center; }
-        img { width: 120px; height: auto; border-radius: 8px; background: #ddd; }
+        img { width: 150px; height: auto; border-radius: 6px; background: #ddd; }
     </style>
 </head>
 <body>
@@ -24,14 +24,14 @@
     <tr>
         <td>{{ loop.index }}</td>
         <td>
-            {% if log[2] %}
-                <img src="data:image/jpeg;base64,{{ log[2] }}">
+            {% if log.image %}
+                <img src="data:image/jpeg;base64,{{ log.image }}">
             {% else %}
                 <img src="{{ url_for('static', filename='default.jpg') }}">
             {% endif %}
         </td>
-        <td>{{ log[1] }}</td>
-        <td>{{ log[3] }}</td>
+        <td>{{ log.status }}</td>
+        <td>{{ log.time }}</td>
     </tr>
     {% endfor %}
 </table>
