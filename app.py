@@ -42,29 +42,25 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'user' not in session:
-        return redirect('/')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC LIMIT 50")
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
+    cursor = db.cursor()
+    cursor.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC")
+    rows = cursor.fetchall()
+    
     logs = []
-    for r in rows:
-        _id, status, blob, time = r
-        image_base64 = base64.b64encode(blob).decode('utf-8') if blob else None
-        
-        logs.append({
-            "id": _id,
-            "status": status,
-            "image": image_base64,
-            "time": time
-        })
+    for row in rows:
+        img_data = row[2]
+        if img_data:
+            try:
+                # Konversi HEX BLOB → BASE64
+                img_base64 = base64.b64encode(img_data).decode('utf-8')
+            except:
+                img_base64 = None
+        else:
+            img_base64 = None
 
-    return render_template('dashboard.html', logs=logs)
+        logs.append((row[0], row[1], img_base64, row[3]))
+
+    return render_template("dashboard.html", logs=logs)
 
 
 @app.route('/logout')
@@ -103,3 +99,4 @@ def api_alert():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
