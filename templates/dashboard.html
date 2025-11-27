@@ -47,18 +47,21 @@
 <body>
   <div class="header">SmartDoor</div>
   <div class="chat-box" id="chat">
-    {% for row in logs %}
-      <div class="bubble">
-        <b>{{ row[3] }}</b>
-        <div>Status: {{ row[1] }}</div>
-{% if row[2] %}
-  <img src="{{ row[2] }}" onerror="this.style.border='3px solid red'; console.log('Image error:', this.src)">
-{% else %}
-  <div style="color:red;">No Image</div>
-{% endif %}
+{% for row in logs %}
+<tr>
+    <td>{{ row[1] }}</td> <!-- status -->
+    <td>
+        {% if row[2] %}
+            <img src="{{ row[2] }}" alt="Snapshot"
+                 style="width:120px; border-radius:6px">
+        {% else %}
+            <span style="color:red;">No Image</span>
+        {% endif %}
+    </td>
+    <td>{{ row[3] }}</td> <!-- timestamp -->
+</tr>
+{% endfor %}
 
-      </div>
-    {% endfor %}
   </div>
 
 <script>
@@ -76,4 +79,5 @@ evt.onmessage = function(e) {
 </script>
 </body>
 </html>
+
 
