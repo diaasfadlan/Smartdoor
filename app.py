@@ -55,9 +55,13 @@ def dashboard():
     convert_logs = []
     for row in logs:
         row = list(row)
-        if isinstance(row[2], (bytes, bytearray)):
+        if row[2]:
+        try:
             row[2] = base64.b64encode(row[2]).decode('utf-8')
+        except:
+            row[2] = None
         convert_logs.append(row)
+
 
     return render_template('dashboard.html', logs=convert_logs)
 
@@ -132,3 +136,4 @@ def test():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
