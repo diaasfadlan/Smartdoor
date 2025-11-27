@@ -20,7 +20,7 @@
       overflow-y: auto;
       padding: 16px;
       display: flex;
-      flex-direction: column-reverse;
+      flex-direction: column;
       gap: 12px;
     }
     .bubble {
@@ -29,7 +29,7 @@
       border-radius: 10px;
       border-left: 4px solid #764ba2;
       width: 280px;
-      align-self: flex-end;
+      align-self: flex-start; /* Masuk kiri */
     }
     img {
       width: 100%;
@@ -70,7 +70,8 @@ evt.onmessage = e => {
     ${data.image ? `<img src="data:image/jpeg;base64,${data.image}">` : ""}
   `;
 
-  chat.prepend(el);
+  chat.appendChild(el); // dari atas ke bawah
+  chat.scrollTop = chat.scrollHeight; // auto scroll ke bawah
 };
 </script>
 
