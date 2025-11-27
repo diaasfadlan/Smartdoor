@@ -17,7 +17,6 @@ def notify_all(message):
         except:
             pass
 
-
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -56,9 +55,8 @@ def dashboard():
     convert_logs = []
     for row in logs:
         row = list(row)
-        # convert only if BLOB bytes
         if isinstance(row[2], (bytes, bytearray)):
-            row[2] = base64.b64encode(row[2]).decode('utf-8')
+            row[2] = "data:image/jpeg;base64," + base64.b64encode(row[2]).decode('utf-8')
         convert_logs.append(row)
 
     return render_template('dashboard.html', logs=convert_logs)
@@ -93,7 +91,8 @@ def api_alert():
 
         notify_all(json.dumps({
             "status": status,
-            "image": (base64.b64encode(image_blob).decode('utf-8') if image_blob else None),
+            "image": ("data:image/jpeg;base64," + base64.b64encode(image_blob).decode('utf-8')
+                      if image_blob else None),
             "time": datetime.now().strftime("%H:%M:%S")
         }))
 
