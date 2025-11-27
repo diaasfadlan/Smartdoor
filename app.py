@@ -42,21 +42,31 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    cursor = db.cursor()
-    cursor.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC")
-    rows = cursor.fetchall()
-    
+    if 'user' not in session:
+        return redirect('/')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, status, image_path, time FROM logs ORDER BY id DESC LIMIT 50")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
     logs = []
     for row in rows:
-        img_data = row[2]
-        if img_data:
+        img = row[2]
+        img_base64 = None
+
+        if img:
             try:
-                # Konversi HEX BLOB → BASE64
-                img_base64 = base64.b64encode(img_data).decode('utf-8')
-            except:
-                img_base64 = None
-        else:
-            img_base64 = None
+                # Jika HEX format dari MySQL → convert
+                if isinstance(img, str) and img.startswith("0x"):
+                    hex_data = img[2:]
+                    img = bytes.fromhex(hex_data)
+
+                img_base64 = base64.b64encode(img).decode('utf-8')
+            except Exception as e:
+                print("Decode Error:", e)
 
         logs.append((row[0], row[1], img_base64, row[3]))
 
@@ -99,4 +109,3 @@ def api_alert():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-
